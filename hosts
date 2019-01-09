@@ -1,0 +1,9 @@
+[kubernetes-centos]
+centos ansible_host=1.2.3.4 ansible_user=centos
+
+[kubernetes-ubuntu]
+ubuntu ansible_host=5.6.7.8 ansible_user=ubuntu
+
+[kubernetes:children]
+kubernetes-centos
+kubernetes-ubuntu

@@ -1,0 +1,37 @@
+---
+- name: check existing helm installation
+  stat: 
+    path: "/usr/local/bin/helm"
+  register: helm_installation
+  tags:
+    - helm
+
+- name: install helm
+  become: yes
+  block:
+  - shell: "curl -L https://storage.googleapis.com/kubernetes-helm/helm-v{{ helm_version }}-amd64.tar.gz | tar xvzf - -C $HOME/"
+  - shell: "mv $HOME/linux-amd64/helm /usr/local/bin/helm"
+  when: helm_installation.stat.exists == False 
+  tags:
+    - helm
+
+- name: create serviceaccount for tiller
+  shell: "if kubectl get sa tiller -n kube-system; then /bin/true; else {{ run_command }}; fi"
+  vars:
+    run_command: "kubectl create serviceaccount -n kube-system tiller"
+  tags:
+    - helm
+
+- name: create clusterrolebinding for tiller
+  shell: "if kubectl get clusterrolebinding tiller-binding; then /bin/true; else {{ run_command }}; fi"
+  vars:
+    run_command: "kubectl create clusterrolebinding tiller-binding --clusterrole=cluster-admin --serviceaccount kube-system:tiller"
+  tags:
+    - helm
+
+- name: initalize helm's tiller
+  shell: "if helm list; then /bin/true; else {{ run_command }}; fi"
+  vars:
+    run_command: "helm init --service-account tiller"
+  tags:
+    - helm

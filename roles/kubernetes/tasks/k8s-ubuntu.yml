@@ -1,0 +1,27 @@
+---
+- name: set kernel parameters
+  become: yes
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: ansible_distribution == 'Ubuntu'
+  tags:
+    - k8s-configure
+
+- name: define Ubuntu kubernetes repository
+  become: yes
+  block:
+    - name: define kubernetes repository key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+    - name: define Ubuntu kubernetes repository
+      apt_repository:
+        repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+  when: ansible_distribution == 'Ubuntu'
+  tags:
+    - k8s-configure

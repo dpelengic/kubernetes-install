@@ -1,0 +1,40 @@
+---
+- name: install kubernetes
+  become: yes
+  vars:
+    packages:
+    - "{{ kubelet_version }}"
+    - "{{ kubeadm_version }}"
+    - "{{ kubectl_version }}"
+  package:
+    name: "{{ packages }}"
+    state: present
+  notify: [start kubelet]
+  tags:
+    - k8s-install
+
+# bug ticket, open here https://github.com/ansible/ansible/issues/36585
+# use simple shell command for now instead
+#- name: enable kubelet service
+#  systemd:
+#    name: kubelet
+#    enabled: yes
+#    masked: no
+- name: enable kubelet service
+  become: yes
+  shell: systemctl -f enable kubelet
+  tags:
+    - k8s-install
+
+- name: force systemd to reread configs
+  become: yes
+  systemd:
+    daemon_reload: yes
+  tags:
+    - k8s-install
+
+- name: force run handlers
+  meta: flush_handlers
+  tags:
+    - k8s-install
+

@@ -1,0 +1,50 @@
+---
+- name: remove default docker packages
+  become: yes
+  package:
+    name: "{{ docker_remove_packages }}"
+    state: absent
+  tags:
+    - docker
+
+- name: install docker prerequisites
+  become: yes
+  package:
+    name: "{{ docker_install_packages }}"
+    state: present
+  tags:
+    - docker
+
+- name: install docker-ce
+  become: yes
+  package:
+    name: "{{ docker_version }}"
+    state: present
+  notify: [start docker]
+  tags:
+    - docker
+
+# bug ticket, open here https://github.com/ansible/ansible/issues/36585
+# use simple shell command for now instead
+#- name: enable docker service
+#  systemd:
+#    name: docker
+#    enabled: yes
+#    masked: no
+- name: enable docker service
+  become: yes
+  shell: systemctl -f enable docker
+  tags:
+    - docker
+
+- name: force systemd to reread configs
+  become: yes
+  systemd:
+    daemon_reload: yes
+  tags:
+    - docker
+
+- name: force run handlers
+  meta: flush_handlers
+  tags:
+    - docker

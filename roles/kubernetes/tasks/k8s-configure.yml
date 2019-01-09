@@ -1,0 +1,85 @@
+---
+- name: verify existing installation
+  stat:
+    path: /opt/kubeinit.log
+  register: kubeinit_file
+  tags:
+    - k8s-configure
+
+- debug:
+    msg: "Kubernetes already configured! Run delete playbook to reset it."
+  when: kubeinit_file.stat.exists == False
+  tags:
+    - k8s-configure
+
+- name: disable swap
+  become: yes
+  block:
+    - mount:
+        name: swap
+        fstype: swap
+        state: absent
+    - command: swapoff -a
+  tags:
+    - k8s-configure
+
+- name: get user name and his home dir
+  set_fact:
+    user_name: "{{ ansible_env.USER }}"
+    user_home: "{{ ansible_env.HOME }}"
+  tags:
+    - k8s-configure
+
+- name: get user group
+  shell: id -g -n
+  register: user_group
+  tags:
+    - k8s-configure
+
+- name: initialize kubernetes
+  become: yes
+  block:
+    - name: ensure kube directory for non-root user exists
+      file:
+        path: "{{ user_home }}/.kube"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_group.stdout }}"
+        mode: 0755
+
+    - name: initialize kubernetes with kubeadm
+      shell: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --pod-network-cidr=10.244.0.0/16 | tee -a /opt/kubeinit.log
+
+    - name: define kubernetes config file
+      shell: "cp /etc/kubernetes/admin.conf {{ user_home }}/.kube/config"
+
+    - name: define ownership of kubernetes config file
+      file:
+        path: "{{ user_home }}/.kube/config"
+        owner: "{{ user_name }}"
+        group: "{{ user_group.stdout }}"
+        mode: 0600
+  when:
+    - kubeinit_file.stat.exists == False
+  tags:
+    - k8s-configure
+
+
+- name: configure kubernetes
+  block:
+
+    - name: allow pod deployment
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+    - name: add cluster-admin role
+      shell: kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+
+  when:
+    - kubeinit_file.stat.exists == False
+  tags:
+    - k8s-configure
+
+- name: install flannel network
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v{{ flannel_version }}/Documentation/kube-flannel.yml
+  tags:
+    - k8s-configure

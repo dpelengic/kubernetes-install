@@ -1,0 +1,50 @@
+---
+- name: install epel repo
+  become: yes
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - k8s-install
+
+- name: set selinux to permissive
+  become: yes
+  selinux:
+    policy: targeted
+    state: permissive
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - k8s-install
+
+- name: define CentOS kubernetes repository
+  become: yes
+  copy:
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - k8s-install
+
+- name: define kubernetes repo keys
+  become: yes
+  rpm_key:
+    state: present
+    key: "{{ item }}"
+  with_items:
+    - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+    - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - k8s-install
+
+- name: update local repo cache
+  become: yes
+  shell: yum -q makecache -y --disablerepo='*' --enablerepo=kubernetes
+  changed_when: false
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - k8s-install

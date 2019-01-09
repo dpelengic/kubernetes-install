@@ -1,0 +1,22 @@
+---
+- name: install k8s centos specifics
+  include_tasks: k8s-centos.yml
+  when: ansible_distribution == 'CentOS'
+  tags: k8s-install
+
+- name: install k8s ubuntu specifics
+  include_tasks: k8s-ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+  tags: k8s-install
+
+- name: install k8s
+  include_tasks: k8s-install.yml
+  tags: k8s-install
+
+- name: configure k8s
+  include_tasks: k8s-configure.yml
+  tags: [k8s-install, k8s-configure]
+
+- name: reset k8s
+  include_tasks: k8s-reset.yml
+  tags: [never, k8s-reset]

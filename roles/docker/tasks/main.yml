@@ -1,0 +1,14 @@
+---
+- name: install docker centos specifics
+  include_tasks: docker-centos.yml
+  when: ansible_distribution == 'CentOS'
+  tags: docker
+
+- name: install docker ubuntu specifics
+  include_tasks: docker-ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+  tags: docker
+
+- name: install docker
+  include_tasks: docker.yml
+  tags: docker

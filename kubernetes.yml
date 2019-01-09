@@ -1,0 +1,12 @@
+---
+- hosts: kubernetes
+  pre_tasks:
+    - name: install python
+      become: yes
+      raw: test -e /usr/bin/python || (yum -y update && yum install -y python) || (apt -y update && apt install -y python-minimal)
+    - name: gather facts
+      setup:
+  roles:
+    - docker
+    - kubernetes
+    - helm
