@@ -17,8 +17,8 @@ There is also some basic configuration, to make this node ready for pod deployme
 
 ## Tested Ansible version
 
-```
-$ ansible --version
+```bash
+ansible --version
   ansible 2.5.1
 ```
 
@@ -50,8 +50,8 @@ Make sure you update the hosts file with correct username and server ip/domain.
 
 The following command will run all ansible roles (docker, kubernetes, helm):
 
-```
-$ ansible-playbook -i hosts -vv kubernetes.yml 
+```bash
+ansible-playbook -i hosts -vv kubernetes.yml 
 ```
 
 ## Available ansible tags
@@ -65,21 +65,21 @@ You can run specific parts of this script with the following tags:
 
 Example using ansible tags, to run only Kubernetes configuration:
 
-```
-$ ansible-playbook -i hosts -vv kubernetes.yml --tags k8s-configure
+```bash
+ansible-playbook -i hosts -vv kubernetes.yml --tags k8s-configure
 ```
 
 ## Verify installation
 
 Inspect the kubeinit output, which was generated during installation:
 
-```
+```bash
 cat /opt/kubeinit.log
 ```
 
 Checking out all pods are running on newly provisioned server:
 
-```
+```bash
 kubectl get pods --all-namespaces
 
 NAMESPACE     NAME                             READY     STATUS    RESTARTS   AGE
